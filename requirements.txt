@@ -1,0 +1,9 @@
+pandas
+datasets
+transformers
+torch
+scikit-learn
+kaggle
+pandas
+click
+tqdm
