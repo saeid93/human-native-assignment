@@ -1,167 +1,227 @@
-# 📄 Take Home Assignment – Machine Learning (PII Violation Detection)
+# Take Home Assignment – Machine Learning (PII Violation Detection)
 
-## 🚀 Overview
+## 🚀 Project Overview
 
-This project solves the task of **automatically flagging data records (text)** that may contain **personally identifiable information (PII)**, as described in the assignment prompt.
+This project was developed for a take-home assignment that requires building a machine learning system capable of **automatically flagging Personally Identifiable Information (PII)** in either text or image data.
 
-It includes:
-- End-to-end data preprocessing
-- Binary classification models (TF-IDF + Logistic Regression, BERT)
-- Evaluation with precision/recall/F1
-- Model checkpoint loading for inference
+The system supports:
+- Two modalities: **Text (BERT)** and **Image (ResNet18)**
+- Unified data format for both types
+- Record-level binary classification
+- Evaluation using realistic public datasets
 
 ---
 
-## 📦 Directory Structure
+## 📘 Assignment Task Summary
+
+> You are given records in the format `Data(dataset_id, id, value, flag)`. Your model must predict `flag = 1` when the `value` potentially violates privacy, based on either textual or visual content.
+
+Requirements:
+- Support at least one modality
+- `flag = 1` for sensitive content
+- Simulated or real datasets allowed
+
+---
+
+## 🗂️ Folder Structure
 
 ```
-human-native/
-├── data/
-│   ├── train.json
+.
+├── README.md
+├── data_image/
+│   ├── 0/                        # Non-PII images
+│   ├── 1/                        # PII images
+│   └── preprocessed_images.json
+├── data_nlp/
 │   ├── preprocessed_train.json
 │   ├── splited_train.json
 │   ├── splited_test.json
 │   └── dataset_metadata.json
-├── preprocess.py
-├── split.py
-├── main.py
-├── tfidf_model.py
-├── bert_model.py
-├── evaluate.py
-├── evaluate_bert_checkpoint.py
-└── requirements.txt
+├── models/
+│   ├── 0/                        # Trained BERT model
+│   └── 1/                        # Trained ResNet model
+├── main_training.py             # Training script
+├── main_inference.py            # Evaluation script
+├── preprocess_nlp.py            # Preprocess TLAL dataset
+├── split_text_dataset.py        # Stratified text split
+├── download_images.py           # Download OpenImages
+├── model_bert.py                # BERT wrapper
+├── model_resnet.py              # ResNet wrapper
+├── requirements.txt
+└── utils.py
 ```
 
 ---
 
-## ✅ Task Summary
+## 📁 Datasets Used
 
-The assignment asked for a model to flag content that:
-- May violate privacy laws (e.g. contains PII)
-- Works at the **record level** (`flag = 0/1`)
-- Uses a realistic simulation of flagged and clean data
+### 1. Text Modality – TLAL Dataset (Kaggle)
 
-We used the TLAL dataset (student essays) and converted it to the assignment-compliant format:
+- Source: [Kaggle PII Detection Challenge](https://www.kaggle.com/competitions/pii-detection-removal-from-educational-data)
+- Essays from MOOC students with token-level BIO labels
+
+#### Preprocessing
+
+```bash
+python preprocess_nlp.py
+python split_text_dataset.py
+```
+
+- Converts token labels to `flag = 1` if any token is PII
+- Produces `preprocessed_train.json`, then stratified into `splited_train.json` and `splited_test.json`
+
+Example:
 ```json
-{
-  "dataset_id": 1,
-  "id": 42,
-  "value": "My name is Jack and I live in Boston.",
-  "flag": 1
-}
+{ "dataset_id": 1, "id": 7, "value": "My name is John", "flag": 1 }
 ```
-
-A companion `Dataset(...)` metadata JSON was also created.
 
 ---
 
-## 🧹 Preprocessing
+### 2. Image Modality – OpenImages V6
 
-Run:
+- Source: [OpenImages Dataset](https://storage.googleapis.com/openimages/web/index.html)
+- Simulates visual PII (e.g., person vs. cat)
+
+#### Labels
+
+| Flag | Classes                        |
+|------|--------------------------------|
+| 1    | Person, Man, Woman             |
+| 0    | Cat, Dog, Furniture, Tool      |
+
+#### Preprocessing
 
 ```bash
-python preprocess.py
+python download_images.py
 ```
 
-This:
-- Cleans the input data
-- Adds `flag` and `dataset_id`
-- Saves:
-  - `preprocessed_train.json`
-  - `dataset_metadata.json`
+- Downloads 150 images per class
+- Generates `preprocessed_images.json`
+
+Example:
+```json
+{ "dataset_id": 2, "id": 45, "value": "data_image/1/person_23.jpg", "flag": 1 }
+```
 
 ---
 
-## 🔀 Splitting
+## 💾 Quick Start (Prebuilt Data & Models)
 
-Run:
+📦 Download everything preprocessed:  
+[**all_data.zip**](https://drive.google.com/file/d/1NjFN8QbQaTaR1KADrj3CacImxnUY6JJu/view?usp=sharing)
 
 ```bash
-python split.py
+unzip all_data.zip
 ```
 
 This creates:
-- `splited_train.json`
-- `splited_test.json`
+```
+data_nlp/
+data_image/
+models/
+```
 
-Using a **stratified 80/20 split**.
+No need to run preprocessing or training.
 
 ---
 
-## 🧠 Training and Evaluation
-
-### TF-IDF + Logistic Regression
-
-```bash
-python main.py --model tfidf
-```
-
-### BERT (fine-tuned)
-
-```bash
-python main.py --model bert
-```
-
-Both routes print a classification report using scikit-learn.
-
----
-
-## 🧪 Evaluate from Last BERT Checkpoint
-
-```bash
-python evaluate_bert_checkpoint.py
-```
-
-This script:
-- Finds the latest checkpoint in `bert_output/`
-- Loads the saved model and tokenizer
-- Evaluates on `splited_test.json`
-
----
-
-## ⚙️ Setup
-
-Install dependencies from `requirements.txt`:
+## 🧰 Installation
 
 ```bash
 pip install -r requirements.txt
 ```
 
-Contents include:
+Key packages:
+- `transformers`, `datasets`, `torch`, `torchvision`
+- `scikit-learn`, `click`, `pandas`, `tqdm`, `Pillow`
+
+---
+
+## 🏋️ Training
+
+To train a new model:
+
+```bash
+python main_training.py --model bert
+python main_training.py --model resnet
 ```
-transformers
-datasets
-scikit-learn
-pandas
-click
-tqdm
+
+- Automatically saved under `models/{n}/` with `metadata.json` and model files
+
+---
+
+## ✅ Evaluation
+
+Run evaluation on trained models:
+
+```bash
+python main_inference.py --type nlp --model-dir models/0
+python main_inference.py --type image --model-dir models/1
 ```
 
 ---
 
-## ✅ Assumptions
+## 📊 Evaluation Results
 
-- Input modality is **text** (permitted by assignment)
-- PII detection framed as **binary classification**
-- Clean and flagged data simulated using a real-world dataset (TLAL)
-- Class imbalance handled via stratified splits
-- Evaluation is focused on **per-record flagging**, not token-level spans
+### Text – BERT (Model ID 0)
 
----
+```bash
+python main_inference.py --type nlp --model-dir models/0
+```
 
-## 📈 Performance Summary (Final BERT Model)
-
-| Class    | Precision | Recall | F1-score |
-|----------|-----------|--------|----------|
-| No PII   | 0.97      | 0.99   | 0.98     |
-| PII      | 0.93      | 0.83   | 0.88     |
-
-- **Accuracy**: 97%
-- **Macro F1**: 0.93
+```
+Evaluation Report (NLP Model):
+              precision    recall  f1-score   support
+      No PII     0.9757    0.9906    0.9831      1173
+         PII     0.9357    0.8466    0.8889       189
+    accuracy                         0.9706      1362
+   macro avg     0.9557    0.9186    0.9360      1362
+weighted avg     0.9701    0.9706    0.9700      1362
+```
 
 ---
 
-## 📫 Contact
+### Image – ResNet18 (Model ID 1)
 
-If you have any questions or would like to discuss the approach in more detail, I’d be happy to explain my reasoning or design choices.
-`sdghafouri@gmail.com`
+```bash
+python main_inference.py --type image --model-dir models/1
+```
+
+```
+Evaluation Report (Image Model):
+              precision    recall  f1-score   support
+      No PII     0.9886    0.9667    0.9775        90
+         PII     0.9674    0.9889    0.9780        90
+    accuracy                         0.9778       180
+   macro avg     0.9780    0.9778    0.9778       180
+weighted avg     0.9780    0.9778    0.9778       180
+```
+
+---
+
+## 🧾 Summary Table
+
+| Model ID | Modality | Accuracy | Macro F1 | Dataset       |
+|----------|----------|----------|----------|---------------|
+| `0`      | Text     | 97.1%    | 0.9360   | TLAL (Kaggle) |
+| `1`      | Image    | 97.8%    | 0.9778   | OpenImages    |
+
+---
+
+## 🔮 Future Directions
+
+- **Containerization**: Package the pipelines into Docker containers for easier deployment, reproducibility, and integration into real-time services via REST APIs.
+
+- **Fine-Grained Detection**: Extend the models to pinpoint the exact source of PII — token-level highlighting for text and bounding boxes for images using object detection architectures like YOLO or Faster R-CNN.
+
+- **Multimodal Fusion**: Combine both modalities for documents or AI-generated outputs that mix text and image.
+
+- **Data Augmentation**: Improve generalization by generating synthetic PII samples (names, IDs, faces) in both modalities.
+
+- **Explainability Tools**: Use interpretability frameworks like SHAP or attention heatmaps to increase model transparency.
+
+---
+
+## 📬 Contact
+
+📧 sdghafouri@gmail.com

@@ -60,9 +60,9 @@ Test       | {test_total:<5} | {test_positives:<12} | {test_total - test_positiv
 def main() -> None:
     setup_logging()
 
-    input_path = os.path.join("data", "preprocessed_train.json")
-    train_output = os.path.join("data", "splited_train.json")
-    test_output = os.path.join("data", "splited_test.json")
+    input_path = os.path.join("data_nlp", "preprocessed_train.json")
+    train_output = os.path.join("data_nlp", "splited_train.json")
+    test_output = os.path.join("data_nlp", "splited_test.json")
 
     full_data = load_json(input_path)
     train_data, test_data = split_json_records(full_data)

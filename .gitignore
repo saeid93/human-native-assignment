@@ -1,3 +1,7 @@
 __pycache__/
 data
 bert_output
+models
+data_nlp
+data_image
+openimages_csv

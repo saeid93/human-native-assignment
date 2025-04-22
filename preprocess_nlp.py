@@ -95,9 +95,9 @@ def save_dataset_metadata(path: str) -> None:
 def main() -> None:
     setup_logging()
 
-    input_path = os.path.join("data", "train.json")
-    data_output_path = os.path.join("data", "preprocessed_train.json")
-    metadata_output_path = os.path.join("data", "dataset_metadata.json")
+    input_path = os.path.join("data_nlp", "train.json")
+    data_output_path = os.path.join("data_nlp", "preprocessed_train.json")
+    metadata_output_path = os.path.join("data_nlp", "dataset_metadata.json")
 
     # Load and preprocess
     raw_data = load_json(input_path)
